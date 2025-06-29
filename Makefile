@@ -21,7 +21,7 @@ $(TARGET): $(OBJS) | $(BIN_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-run:
+run: $(TARGET)
 	@./build/bin/main
 
 clean:
