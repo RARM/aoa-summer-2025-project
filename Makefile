@@ -17,6 +17,7 @@ $(BIN_DIR) $(OBJ_DIR):
 
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
+	@echo ""
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
