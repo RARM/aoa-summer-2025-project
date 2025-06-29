@@ -36,7 +36,7 @@ int* bf_closest_pair(Point* points_arr, int points_num);
 // === Implementation ===
 
 int main(void) {
-  Point* points_arr = generate_random_points(100000, NULL);
+  Point* points_arr = generate_random_points(100000, "build/bin/points.txt");
   printf("Generated 100000 points.\n");
 
   for (int i = 0; i < 100000; i++) {
