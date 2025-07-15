@@ -5,9 +5,11 @@
 
 #include "proj_utils.h"
 
+// === Util Function Prototypes ===
+
 /**
  * @brief Calculates the Euclidean distance between two points.
- * 
+ *
  * Time complexity: O(1)
  * Space complexity: O(1)
  *
@@ -16,16 +18,16 @@
  * @return The Euclidean distance between p1 and p2.
  */
 double points_dist(Point* p1, Point* p2);
- 
+
 /**
  * @brief Finds the closest pair of points using the brute-force approach.
  *
  * The brute-force approach consists in checking the distance of every point
  * with everything other point. It uses two nested loops.
- * 
+ *
  * Time complexity: O(n²)
  * Space complexity: O(1)
- * 
+ *
  * @param points_arr Array of points.
  * @param points_num Number of points in the array.
  * @return A pointer to an array of integers representing the 0-indexed indices
@@ -36,29 +38,25 @@ int* bf_closest_pair(Point* points_arr, int points_num);
 // === Implementation ===
 
 int main(void) {
-  Point* points_arr = generate_random_points(100000, "build/bin/points.txt");
-  printf("Generated 100000 points.\n");
+  // Get the points (generate or retrieve from file).
+  for (int i = 0; i < 10; i++) {
+    int points_num = 1000 * (i + 1);
+    printf("[Main] Generating %d points.\n", points_num);
 
-  for (int i = 0; i < 100000; i++) {
-    printf(
-      "Point %i: (%i, %i)\n", i,
-      (points_arr + i)->x,
-      (points_arr + i)->y
-    );
+    for (int j = 0; j < 10; j++) { // 10 variations of points_num.
+      char filename[50];
+      snprintf(filename, sizeof(filename), "build/bin/data/points-%d-var-%d.txt", points_num, j + 1);
+      Point* points_arr = get_points(points_num, filename);
+      if (!points_arr) {
+        fprintf(stderr, "[Main] Error: Failed to generate points.\n");
+        return EXIT_FAILURE;
+      }
+
+      free_points(points_arr); // Free the allocated memory for points.
+      printf("[Main] Successfully generated %d points.\r", points_num);
+    }
+    printf("                                                  \r");
   }
-
-  int* closets_pair = bf_closest_pair(points_arr, 100000);
-  Point* p1 = points_arr + *closets_pair;
-  Point* p2 = points_arr + *(closets_pair + 1);
-
-  printf("\nThe closests points are:\n");
-  printf("- Point %d: (%d, %d)\n", *closets_pair, p1->x, p1->y);
-  printf("- Point %d: (%d, %d)\n", *(closets_pair + 1), p2->x, p2->y);
-  printf("Distance: %f\n\n", points_dist(p1, p2));
-
-  free(closets_pair);
-  free_points(points_arr);
-
   return 0;
 }
 
@@ -79,7 +77,7 @@ int* bf_closest_pair(Point* points_arr, int points_num) {
 
   int* pairs = calloc(2, sizeof(int));
   pairs[0] = 0, pairs[1] = 1;
-  
+
   // d_min is not inf, the min distance must be the dist of one pair.
   double d_min = points_dist(points_arr, points_arr + 1);
   double d_temp = d_min;

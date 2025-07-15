@@ -21,7 +21,24 @@ typedef struct {
 } Point;
 
 /**
- * @brief Generates an array of random 2D points.
+ * Retrieves or generates an array of Point structures.
+ *
+ * If `filename` is NULL, the function generates a set of points without saving
+ * them. If `filename` is not NULL, the function attempts to retrieve points
+ * from the specified file. If the file does not exist, the function generates
+ * the points and saves them to the given filename.
+ *
+ * @param num_points The number of points to generate or retrieve.
+ * @param filename Path to the file to retrieve or save points. NULL to
+ *                 generate points without saving.
+ * @return Pointer to an array of Point structures. The caller is responsible
+ *         for freeing the memory.
+ */
+
+Point* get_points(size_t num_points, const char* filename);
+
+/**
+ * @brief Generates an array of unique random 2D points.
  *
  * Allocates an array of `num_points` random points on the heap.
  * Optionally saves the generated points to a text file if `filename` is not
