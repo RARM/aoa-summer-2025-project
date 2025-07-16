@@ -35,6 +35,81 @@ double points_dist(Point* p1, Point* p2);
  */
 int* bf_closest_pair(Point* points_arr, int points_num);
 
+/**
+ * @brief Find closest pair of points using the divide-and-conquer approach.
+ *
+ * The divide-and-conquer approach consists in dividing the points into two
+ * halves, finding the closest pair in each half, and then checking if there is
+ * a closer pair that crosses the division line.
+ *
+ * Time complexity: O(n log n)
+ * Space complexity: O(n)
+ *
+ * @param points_arr Array of points.
+ * @param points_num Number of points in the array.
+ * @return A pointer to an array of integers representing the 0-indexed indices
+ *         of the closest pair of points. E.g., { 1, 5 }.
+ */
+int* dnc_closest_pair(Point* points_arr, int points_num);
+
+// Heap Sort
+
+/**
+ * Return the index of the parent of the given index.
+ * 
+ * It performs the operation by shifting the number to the right by one bit.
+ * 
+ * @param i Index of the element in the heap.
+ * @return Index of the parent of the element in i.
+ */
+inline int heap_parent(int i) { return i >> 1; }
+
+/**
+ * Get the index of the left child of a node in a heap given the element index.
+ * 
+ * It performs the operation by shifting the index one bit to the left.
+ * 
+ * @param i Index of the element in the heap.
+ * @return Index of the left child in the heap.
+ */
+inline int heap_left(int i) {return i << 1; }
+
+/**
+ * Get the index of the right child of a node in a heap given the index.
+ * 
+ * The operation is performed shifting the index by the left one bit and adding
+ * one.
+ * 
+ * @param i Index of the element in the heap.
+ * @return Index of the right child.
+ */
+inline int heap_right(int i) { return (i << 1) + 1; }
+
+/**
+ * Maintain the max-heap property after adding an item to the array.
+ * 
+ * This function assume that the left and right subtrees are max-heaph (they
+ * maintain the property of a max-heap). It performs the operation in-place.
+ * 
+ * Note that the function orders the points by the x-coordinates.
+ * 
+ * @param heap Pointer to the root of the max-heap.
+ * @param s Size of the max-heap.
+ * @param i Index of the element to heapify.
+ */
+void max_heapify_points_by_x(Point* heap, int s, int i);
+
+/**
+ * Given an array, this function generates a max heap in place.
+ * 
+ * Note that this functions creates a max heap using the array of points and
+ * their x value as reference.
+ * 
+ * @param heap The contiguous array to convert to a max heap.
+ * @param s Size of the input array.
+ */
+void build_max_heap_points_by_x(Point* arr, int s);
+
 // === Implementation ===
 
 int main(void) {
@@ -94,4 +169,34 @@ int* bf_closest_pair(Point* points_arr, int points_num) {
   }
 
   return pairs;
+}
+
+void max_heapify_points_by_x(Point* heap, int s, int i) {
+  int l = heap_left(i);
+  int r = heap_right(i);
+  int largest;
+
+  if (l < s && (heap + l)->x > (heap + i)->x) {
+    largest = l;
+  } else {
+    largest = i;
+  }
+
+  if (r < s && (heap + r)->x > (heap + largest)->x) {
+    largest = r;
+  }
+
+  if (largest != i) {
+    Point temp = *(heap + i);
+    *(heap + i) = *(heap + largest);
+    *(heap + largest) = *(heap + i);
+
+    max_heapify_points_by_x(heap, s, largest);
+  }
+}
+
+void build_max_heap_points_by_x(Point* arr, int s) {
+  for (int i = (s >> 2); i > 1; i--) {
+    max_heapify_points_by_x(arr, s, i);
+  }
 }
