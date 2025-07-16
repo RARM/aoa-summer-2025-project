@@ -110,6 +110,17 @@ void max_heapify_points_by_x(Point* heap, int s, int i);
  */
 void build_max_heap_points_by_x(Point* arr, int s);
 
+/**
+ * Sort an array of points by their x coordinate using the heap sort algorithm.
+ * 
+ * Time compexity: O(n log n)
+ * Space complexity: O(1)
+ * 
+ * @param arr Array of points to sort.
+ * @param s Size of the array.
+ */
+void heap_sort_points_by_x(Point* arr, int s);
+
 // === Implementation ===
 
 int main(void) {
@@ -196,7 +207,21 @@ void max_heapify_points_by_x(Point* heap, int s, int i) {
 }
 
 void build_max_heap_points_by_x(Point* arr, int s) {
-  for (int i = (s >> 2); i > 1; i--) {
+  for (int i = (s >> 2); i > 0; i--) {
     max_heapify_points_by_x(arr, s, i);
+  }
+}
+
+void heap_sort_points_by_x(Point* arr, int s) {
+  heap_sort_points_by_x(arr, s);
+  int heap_s = s;
+
+  for (int i = s - 1; i > 1; i--) {
+    Point temp = *arr;
+    *arr = *(arr + i);
+    *(arr + i) = temp;
+
+    heap_s--;
+    max_heapify_points_by_x(arr, s, 1);
   }
 }
