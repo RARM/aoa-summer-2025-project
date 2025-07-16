@@ -62,7 +62,7 @@ int* dnc_closest_pair(Point* points_arr, int points_num);
  * @param i Index of the element in the heap.
  * @return Index of the parent of the element in i.
  */
-inline int heap_parent(int i) { return i >> 1; }
+inline int heap_parent(int i) { return (i - 1) >> 1; }
 
 /**
  * Get the index of the left child of a node in a heap given the element index.
@@ -72,7 +72,7 @@ inline int heap_parent(int i) { return i >> 1; }
  * @param i Index of the element in the heap.
  * @return Index of the left child in the heap.
  */
-inline int heap_left(int i) {return i << 1; }
+inline int heap_left(int i) {return (i << 1) + 1; }
 
 /**
  * Get the index of the right child of a node in a heap given the index.
@@ -83,7 +83,7 @@ inline int heap_left(int i) {return i << 1; }
  * @param i Index of the element in the heap.
  * @return Index of the right child.
  */
-inline int heap_right(int i) { return (i << 1) + 1; }
+inline int heap_right(int i) { return (i << 1) + 2; }
 
 /**
  * Maintain the max-heap property after adding an item to the array.
@@ -127,7 +127,7 @@ int main(void) {
   // Get the points (generate or retrieve from file).
   for (int i = 0; i < 10; i++) {
     int points_num = 1000 * (i + 1);
-    printf("[Main] Generating %d points.\n", points_num);
+    printf("\n\n=== [Main] Generating %d points.\n", points_num);
 
     for (int j = 0; j < 10; j++) { // 10 variations of points_num.
       char filename[50];
@@ -138,10 +138,18 @@ int main(void) {
         return EXIT_FAILURE;
       }
 
+      heap_sort_points_by_x(points_arr, points_num);
+
+      printf("\nPrinting 10 points sorted by their x-coordinate:\n");
+      for (int k = 0; k < 10; k++) printf("%2d. (%d, %d)\n",
+        k + 1,
+        (points_arr + k)->x,
+        (points_arr + k)->y
+      );
+
       free_points(points_arr); // Free the allocated memory for points.
-      printf("[Main] Successfully generated %d points.\r", points_num);
+      // printf("[Main] Successfully generated %d points.\n", points_num);
     }
-    printf("                                                  \r");
   }
   return 0;
 }
@@ -200,7 +208,7 @@ void max_heapify_points_by_x(Point* heap, int s, int i) {
   if (largest != i) {
     Point temp = *(heap + i);
     *(heap + i) = *(heap + largest);
-    *(heap + largest) = *(heap + i);
+    *(heap + largest) = temp;
 
     max_heapify_points_by_x(heap, s, largest);
   }
@@ -213,15 +221,15 @@ void build_max_heap_points_by_x(Point* arr, int s) {
 }
 
 void heap_sort_points_by_x(Point* arr, int s) {
-  heap_sort_points_by_x(arr, s);
+  build_max_heap_points_by_x(arr, s);
   int heap_s = s;
 
-  for (int i = s - 1; i > 1; i--) {
+  for (int i = s - 1; i > 0; i--) {
     Point temp = *arr;
     *arr = *(arr + i);
     *(arr + i) = temp;
 
     heap_s--;
-    max_heapify_points_by_x(arr, s, 1);
+    max_heapify_points_by_x(arr, heap_s, 0);
   }
 }
