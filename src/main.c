@@ -56,9 +56,9 @@ int* dnc_closest_pair(Point* points_arr, int points_num);
 
 /**
  * Return the index of the parent of the given index.
- * 
+ *
  * It performs the operation by shifting the number to the right by one bit.
- * 
+ *
  * @param i Index of the element in the heap.
  * @return Index of the parent of the element in i.
  */
@@ -66,9 +66,9 @@ inline int heap_parent(int i) { return (i - 1) >> 1; }
 
 /**
  * Get the index of the left child of a node in a heap given the element index.
- * 
+ *
  * It performs the operation by shifting the index one bit to the left.
- * 
+ *
  * @param i Index of the element in the heap.
  * @return Index of the left child in the heap.
  */
@@ -76,10 +76,10 @@ inline int heap_left(int i) {return (i << 1) + 1; }
 
 /**
  * Get the index of the right child of a node in a heap given the index.
- * 
+ *
  * The operation is performed shifting the index by the left one bit and adding
  * one.
- * 
+ *
  * @param i Index of the element in the heap.
  * @return Index of the right child.
  */
@@ -87,39 +87,42 @@ inline int heap_right(int i) { return (i << 1) + 2; }
 
 /**
  * Maintain the max-heap property after adding an item to the array.
- * 
+ *
  * This function assume that the left and right subtrees are max-heaph (they
  * maintain the property of a max-heap). It performs the operation in-place.
- * 
+ *
  * Note that the function orders the points by the x-coordinates.
- * 
+ *
  * @param heap Pointer to the root of the max-heap.
  * @param s Size of the max-heap.
  * @param i Index of the element to heapify.
+ * @param use_y Use the y value of each point to maintain the max heap.
  */
-void max_heapify_points_by_x(Point* heap, int s, int i);
+void max_heapify_points_by_x(Point* heap, int s, int i, int use_y);
 
 /**
  * Given an array, this function generates a max heap in place.
- * 
+ *
  * Note that this functions creates a max heap using the array of points and
  * their x value as reference.
- * 
+ *
  * @param heap The contiguous array to convert to a max heap.
  * @param s Size of the input array.
+ * @param use_y Use the y values of the points to build the max heap instead.
  */
-void build_max_heap_points_by_x(Point* arr, int s);
+void build_max_heap_points_by_x(Point* arr, int s, int use_y);
 
 /**
  * Sort an array of points by their x coordinate using the heap sort algorithm.
- * 
+ *
  * Time compexity: O(n log n)
  * Space complexity: O(1)
- * 
+ *
  * @param arr Array of points to sort.
  * @param s Size of the array.
+ * @param use_y Use the y value of the points for sorting instead.
  */
-void heap_sort_points_by_x(Point* arr, int s);
+void heap_sort_points_by_x(Point* arr, int s, int use_y);
 
 // === Implementation ===
 
@@ -138,10 +141,19 @@ int main(void) {
         return EXIT_FAILURE;
       }
 
-      heap_sort_points_by_x(points_arr, points_num);
+      heap_sort_points_by_x(points_arr, points_num, 0);
 
-      printf("\nPrinting 10 points sorted by their x-coordinate:\n");
-      for (int k = 0; k < 10; k++) printf("%2d. (%d, %d)\n",
+      printf("\nPrinting 2 points sorted by their x-coordinate:\n");
+      for (int k = 0; k < 2; k++) printf("%2d. (%d, %d)\n",
+        k + 1,
+        (points_arr + k)->x,
+        (points_arr + k)->y
+      );
+
+      heap_sort_points_by_x(points_arr, points_num, 1);
+
+      printf("\nPrinting 2 points sorted by their y-coordinate:\n");
+      for (int k = 0; k < 2; k++) printf("%2d. (%d, %d)\n",
         k + 1,
         (points_arr + k)->x,
         (points_arr + k)->y
@@ -190,18 +202,24 @@ int* bf_closest_pair(Point* points_arr, int points_num) {
   return pairs;
 }
 
-void max_heapify_points_by_x(Point* heap, int s, int i) {
+void max_heapify_points_by_x(Point* heap, int s, int i, int use_y) {
   int l = heap_left(i);
   int r = heap_right(i);
   int largest;
 
-  if (l < s && (heap + l)->x > (heap + i)->x) {
+  if (
+    l < s &&
+    (use_y ? (heap + l)->y > (heap + i)->y : (heap + l)->x > (heap + i)->x)
+  ) {
     largest = l;
   } else {
     largest = i;
   }
 
-  if (r < s && (heap + r)->x > (heap + largest)->x) {
+  if (
+    r < s &&
+    (use_y ? (heap + r)->y > (heap + largest)->y : (heap + r)->x > (heap + largest)->x)
+  ) {
     largest = r;
   }
 
@@ -210,18 +228,18 @@ void max_heapify_points_by_x(Point* heap, int s, int i) {
     *(heap + i) = *(heap + largest);
     *(heap + largest) = temp;
 
-    max_heapify_points_by_x(heap, s, largest);
+    max_heapify_points_by_x(heap, s, largest, use_y);
   }
 }
 
-void build_max_heap_points_by_x(Point* arr, int s) {
+void build_max_heap_points_by_x(Point* arr, int s, int use_y) {
   for (int i = (s >> 2); i > 0; i--) {
-    max_heapify_points_by_x(arr, s, i);
+    max_heapify_points_by_x(arr, s, i, use_y);
   }
 }
 
-void heap_sort_points_by_x(Point* arr, int s) {
-  build_max_heap_points_by_x(arr, s);
+void heap_sort_points_by_x(Point* arr, int s, int use_y) {
+  build_max_heap_points_by_x(arr, s, use_y);
   int heap_s = s;
 
   for (int i = s - 1; i > 0; i--) {
@@ -230,6 +248,6 @@ void heap_sort_points_by_x(Point* arr, int s) {
     *(arr + i) = temp;
 
     heap_s--;
-    max_heapify_points_by_x(arr, heap_s, 0);
+    max_heapify_points_by_x(arr, heap_s, 0, use_y);
   }
 }
