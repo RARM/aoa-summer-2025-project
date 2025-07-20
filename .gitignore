@@ -1,2 +1,7 @@
-build/
+build/*
+!build/bin
+build/bin/*
+!build/bin/performance.csv
+!build/bin/data
+
 .DS_Store
