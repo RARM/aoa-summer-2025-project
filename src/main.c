@@ -35,12 +35,22 @@ double points_dist(Point* p1, Point* p2);
  */
 int* bf_closest_pair(Point* points_arr, int points_num);
 
+typedef struct {
+    Point p1;
+    Point p2;
+    double dist;
+} PointPair;
+
 /**
  * @brief Find closest pair of points using the divide-and-conquer approach.
  *
  * The divide-and-conquer approach consists in dividing the points into two
  * halves, finding the closest pair in each half, and then checking if there is
  * a closer pair that crosses the division line.
+ * 
+ * This methods alters the points_arr array of points. It sorts the points by
+ * their x values in place. The values return apply to the sorted points_arr
+ * array.
  *
  * Time complexity: O(n log n)
  * Space complexity: O(n)
@@ -51,6 +61,16 @@ int* bf_closest_pair(Point* points_arr, int points_num);
  *         of the closest pair of points. E.g., { 1, 5 }.
  */
 int* dnc_closest_pair(Point* points_arr, int points_num);
+
+/**
+ * Helper function to recursively find the closets points.
+ * 
+ * @param Px
+ * @param Py
+ * @param points_num
+ * @returns
+ */
+PointPair dnc_closest_pair_rec(Point* Px, Point* Py, int points_num);
 
 // Heap Sort
 
@@ -202,6 +222,142 @@ int* bf_closest_pair(Point* points_arr, int points_num) {
   return pairs;
 }
 
+int* dnc_closest_pair(Point* points_arr, int points_num) {
+  Point* Px = dup_points(points_arr, points_num);
+  Point* Py = dup_points(points_arr, points_num);
+  if (!Px || !Py) {
+    fprintf(stderr, "[Main] Error: Failed to allocate memory for sorted point arrays.\n");
+    free(Px);
+    free(Py);
+    return NULL;
+  }
+
+  heap_sort_points_by_x(Px, points_num, 0); // 0 for sorting by x
+  heap_sort_points_by_x(Py, points_num, 1); // 1 for sorting by y
+
+  PointPair closest_pair = dnc_closest_pair_rec(Px, Py, points_num);
+
+  // The recursive function gives us the points. Now we must find their
+  // indices in the Px array to meet the return requirement. This O(n) search
+  // only happens once, so it doesn't affect the overall O(n log n) complexity.
+  int* final_indices = malloc(sizeof(int) * 2);
+  if (!final_indices) return NULL;
+  
+  final_indices[0] = -1;
+  final_indices[1] = -1;
+
+  for (int i = 0; i < points_num; i++) {
+    if (Px[i].x == closest_pair.p1.x && Px[i].y == closest_pair.p1.y) {
+      final_indices[0] = i;
+    }
+    if (Px[i].x == closest_pair.p2.x && Px[i].y == closest_pair.p2.y) {
+      final_indices[1] = i;
+    }
+  }
+  
+  // Handle case where the two points are the same in the final result
+  if (final_indices[0] == final_indices[1]) {
+    fprintf(stderr, "[Main] Error: POINTS ARE THE SAME.\n");
+    // for (int i = 0; i < points_num; i++) {
+    //     if (i != final_indices[0] && Px[i].x == closest_pair.p1.x && Px[i].y == closest_pair.p1.y) {
+    //         final_indices[1] = i;
+    //         break;
+    //     }
+    // }
+  }
+
+  free(Px);
+  free(Py);
+
+  return final_indices;
+}
+
+PointPair dnc_closest_pair_rec(Point* Px, Point* Py, int points_num) {
+  // BASE CASE: If there are 3 or fewer points, use brute force.
+  if (points_num <= 3) {
+    int *pairs = bf_closest_pair(Px, points_num);
+    PointPair result;
+    result.p1 = Px[pairs[0]];
+    result.p2 = Px[pairs[1]];
+    result.dist = points_dist(&result.p1, &result.p2);
+    free(pairs);
+    return result;
+  }
+
+  // DIVIDE: Find the midpoint and create Qx, Rx, Qy, Ry.
+  int mid = points_num / 2;
+  Point mid_point = Px[mid - 1];
+
+  // Create Qx and Rx arrays
+  Point* Qx = (Point*)malloc(sizeof(Point) * mid);
+  Point* Rx = (Point*)malloc(sizeof(Point) * (points_num - mid));
+  for(int i = 0; i < mid; i++) {
+      Qx[i] = Px[i];
+  }
+  for(int i = 0; i < (points_num - mid); i++) {
+      Rx[i] = Px[mid + i];
+  }
+
+  // Create Qy and Ry (the y-sorted arrays for the left and right halves).
+  Point* Qy = (Point*)malloc(sizeof(Point) * mid);
+  Point* Ry = (Point*)malloc(sizeof(Point) * (points_num - mid));
+  int q_idx = 0;
+  int r_idx = 0;
+  for (int i = 0; i < points_num; i++) {
+    if (Py[i].x < mid_point.x || (Py[i].x == mid_point.x && Py[i].y <= mid_point.y)) {
+        if(q_idx < mid) Qy[q_idx++] = Py[i];
+        else Ry[r_idx++] = Py[i]; // Handle vertical line case.
+    } else {
+      Ry[r_idx++] = Py[i];
+    }
+  }
+
+  // CONQUER: Recursively find the closest pair in the left and right halves.
+  PointPair pair_q = dnc_closest_pair_rec(Qx, Qy, mid);
+  PointPair pair_r = dnc_closest_pair_rec(Rx, Ry, points_num - mid);
+
+  // Free the memory for the subarrays
+  free(Qx);
+  free(Rx);
+  free(Qy);
+  free(Ry);
+
+  // COMBINE
+  // Determine the minimum distance (delta) from the two halves.
+  PointPair min_pair = (pair_q.dist < pair_r.dist) ? pair_q : pair_r;
+  double delta = min_pair.dist;
+
+  // Constructing S. O(n) to create the strip.
+  // Check for a closer pair across the dividing line (in the "strip").
+  Point* strip = (Point*)malloc(sizeof(Point) * points_num);
+  int strip_len = 0;
+  for (int i = 0; i < points_num; i++) {
+    if (abs(Py[i].x - mid_point.x) < delta) {
+      strip[strip_len++] = Py[i];
+    }
+  }
+
+  // Check for closer pairs within the strip.
+  // For each point, we only need to check the next 15 points in the y-sorted strip.
+  for (int i = 0; i < strip_len; i++) {
+    for (int j = i + 1; j < strip_len && (j - i) <= 15; j++) {
+      double d = points_dist(&strip[i], &strip[j]);
+      if (d < min_pair.dist) {
+        min_pair.dist = d;
+        min_pair.p1 = strip[i];
+        min_pair.p2 = strip[j];
+      }
+    }
+  }
+
+  // We don't need the final comparison in the original code because this code
+  // is already including the pairs q and r in the comparision. The inclusion
+  // happens when calculating delta.
+
+  free(strip);
+  return min_pair;
+}
+
 void max_heapify_points_by_x(Point* heap, int s, int i, int use_y) {
   int l = heap_left(i);
   int r = heap_right(i);
@@ -233,7 +389,7 @@ void max_heapify_points_by_x(Point* heap, int s, int i, int use_y) {
 }
 
 void build_max_heap_points_by_x(Point* arr, int s, int use_y) {
-  for (int i = (s >> 2); i > 0; i--) {
+  for (int i = (s >> 2) - 1; i > 0; i--) {
     max_heapify_points_by_x(arr, s, i, use_y);
   }
 }

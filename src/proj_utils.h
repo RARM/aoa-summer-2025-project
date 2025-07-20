@@ -38,6 +38,16 @@ typedef struct {
 Point* get_points(size_t num_points, const char* filename);
 
 /**
+ * Create (allocate) an array of points copying from `points_arr`.
+ * 
+ * @param points_arr Pointer to the array of pointers.
+ * @param num_points Array size.
+ * @return A new array with the duplicated array of points. The caller is
+ *         responsible for freeing the memory.
+ */
+Point* dup_points(Point* points_arr, size_t num_points);
+
+/**
  * @brief Generates an array of unique random 2D points.
  *
  * Allocates an array of `num_points` random points on the heap.

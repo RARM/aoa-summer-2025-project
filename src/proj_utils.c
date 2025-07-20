@@ -34,6 +34,16 @@ Point* get_points(size_t num_points, const char* filename) {
   }
 }
 
+Point* dup_points(Point* points_arr, size_t num_points) {
+  Point* points = malloc(sizeof(Point) * num_points);
+
+  if (points) {
+    for (size_t i = 0; i < num_points; i++) *(points + i) = *(points_arr + i);
+  }
+
+  return points;
+}
+
 Point* generate_random_points(size_t num_points, const char* filename) {
   Point* arr = malloc(sizeof(Point) * num_points);
   if (!arr) fprintf(stderr, "[Project Utils] Error: Can't allocate memory for points.\n");
