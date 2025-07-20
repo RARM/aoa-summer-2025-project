@@ -304,13 +304,13 @@ int* dnc_closest_pair(Point* points_arr, int points_num) {
   final_indices[1] = -1;
 
   for (int i = 0; i < points_num; i++) {
-  if (points_arr[i].x == closest_pair.p1.x && points_arr[i].y == closest_pair.p1.y) {
-    final_indices[0] = i;
+    if (points_arr[i].x == closest_pair.p1.x && points_arr[i].y == closest_pair.p1.y) {
+      final_indices[0] = i;
+    }
+    if (points_arr[i].x == closest_pair.p2.x && points_arr[i].y == closest_pair.p2.y) {
+      final_indices[1] = i;
+    }
   }
-  if (points_arr[i].x == closest_pair.p2.x && points_arr[i].y == closest_pair.p2.y) {
-    final_indices[1] = i;
-  }
-}
   
   // Handle case where the two points are the same in the final result
   if (final_indices[0] == final_indices[1]) {
