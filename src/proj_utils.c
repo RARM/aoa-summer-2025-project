@@ -55,8 +55,12 @@ Point* generate_random_points(size_t num_points, const char* filename) {
     if (!fp) fprintf(stderr, "[Project Utils] Error: Couldn't open the file: \"%s\"\n", filename);
   }
 
-  srand(time(NULL));
-  
+  static int seeded = 0;
+  if (!seeded) {
+    srand(time(NULL));
+    seeded = 1;
+  }
+
   // Generate unique random points.
   size_t generated = 0;
   while (generated < num_points) {
