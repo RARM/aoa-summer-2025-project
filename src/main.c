@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "proj_utils.h"
 
@@ -149,8 +150,8 @@ void heap_sort_points_by_x(Point* arr, int s, int use_y);
 int main(void) {
   // Get the points (generate or retrieve from file).
   for (int i = 0; i < 10; i++) {
-    int points_num = 1000 * (i + 1);
-    printf("\n\n=== [Main] Generating %d points.\n", points_num);
+    int points_num = 10000 * (i + 1);
+    printf("=== [Main] Analyzing %d points. ===\n\n", points_num);
 
     for (int j = 0; j < 10; j++) { // 10 variations of points_num.
       char filename[50];
@@ -161,27 +162,55 @@ int main(void) {
         return EXIT_FAILURE;
       }
 
-      heap_sort_points_by_x(points_arr, points_num, 0);
+      struct timespec start, end;
+      double elapsed_time_ms, elapsed_time_ns;
 
-      printf("\nPrinting 2 points sorted by their x-coordinate:\n");
-      for (int k = 0; k < 2; k++) printf("%2d. (%d, %d)\n",
-        k + 1,
-        (points_arr + k)->x,
-        (points_arr + k)->y
-      );
+      // I am using clock_gettime instead of time() because is available in 
+      // non-POSIX systems and is more precise.
 
-      heap_sort_points_by_x(points_arr, points_num, 1);
+      clock_gettime(CLOCK_MONOTONIC, &start);
+      int *bf_pair = bf_closest_pair(points_arr, points_num);
+      clock_gettime(CLOCK_MONOTONIC, &end);
 
-      printf("\nPrinting 2 points sorted by their y-coordinate:\n");
-      for (int k = 0; k < 2; k++) printf("%2d. (%d, %d)\n",
-        k + 1,
-        (points_arr + k)->x,
-        (points_arr + k)->y
-      );
+      Point* bf_p1 = points_arr + bf_pair[0];
+      Point* bf_p2 = points_arr + bf_pair[1];
 
+      // Calculate elapsed time in milliseconds and nanoseconds.
+      elapsed_time_ms = (end.tv_sec - start.tv_sec) * 1000.0; // seconds to milliseconds
+      elapsed_time_ms += (end.tv_nsec - start.tv_nsec) / 1000000.0; // nanoseconds to milliseconds
+
+      elapsed_time_ns = (end.tv_sec - start.tv_sec) * 1000000000.0; // seconds to nanoseconds
+      elapsed_time_ns += (end.tv_nsec - start.tv_nsec); // nanoseconds
+
+      printf("Method: Brute Force        | Time: %.2f ms | %.2f ns | Points found: (%d, %d) and (%d, %d)\n",
+             elapsed_time_ms, elapsed_time_ns, bf_p1->x, bf_p1->y, bf_p2->x, bf_p2->y);
+
+      free(bf_pair); // Free the allocated memory for the pair.
+
+      clock_gettime(CLOCK_MONOTONIC, &start);
+      int *dnc_pair = dnc_closest_pair(points_arr, points_num);
+      clock_gettime(CLOCK_MONOTONIC, &end);
+
+      Point* dnc_p1 = points_arr + dnc_pair[0];
+      Point* dnc_p2 = points_arr + dnc_pair[1];
+
+      // Calculate elapsed time in milliseconds and nanoseconds.
+      elapsed_time_ms = (end.tv_sec - start.tv_sec) * 1000.0; // seconds to milliseconds
+      elapsed_time_ms += (end.tv_nsec - start.tv_nsec) / 1000000.0; // nanoseconds to milliseconds
+
+      elapsed_time_ns = (end.tv_sec - start.tv_sec) * 1000000000.0; // seconds to nanoseconds
+      elapsed_time_ns += (end.tv_nsec - start.tv_nsec); // nanoseconds
+
+      printf("Method: Divide and Conquer | Time: %.2f ms | %.2f ns | Points found: (%d, %d) and (%d, %d)\n",
+             elapsed_time_ms, elapsed_time_ns, dnc_p1->x, dnc_p1->y, dnc_p2->x, dnc_p2->y);
+
+      free(dnc_pair); // Free the allocated memory for the pair.
+      
       free_points(points_arr); // Free the allocated memory for points.
       // printf("[Main] Successfully generated %d points.\n", points_num);
     }
+
+    printf("\n\n");
   }
   return 0;
 }
@@ -247,13 +276,13 @@ int* dnc_closest_pair(Point* points_arr, int points_num) {
   final_indices[1] = -1;
 
   for (int i = 0; i < points_num; i++) {
-    if (Px[i].x == closest_pair.p1.x && Px[i].y == closest_pair.p1.y) {
-      final_indices[0] = i;
-    }
-    if (Px[i].x == closest_pair.p2.x && Px[i].y == closest_pair.p2.y) {
-      final_indices[1] = i;
-    }
+  if (points_arr[i].x == closest_pair.p1.x && points_arr[i].y == closest_pair.p1.y) {
+    final_indices[0] = i;
   }
+  if (points_arr[i].x == closest_pair.p2.x && points_arr[i].y == closest_pair.p2.y) {
+    final_indices[1] = i;
+  }
+}
   
   // Handle case where the two points are the same in the final result
   if (final_indices[0] == final_indices[1]) {
@@ -273,7 +302,14 @@ int* dnc_closest_pair(Point* points_arr, int points_num) {
 }
 
 PointPair dnc_closest_pair_rec(Point* Px, Point* Py, int points_num) {
-  // BASE CASE: If there are 3 or fewer points, use brute force.
+  // BASE CASE: If there are less than 2 points, return an invalid pair.
+  if (points_num < 2) {
+    PointPair result;
+    result.dist = INFINITY; // Return infinite distance for invalid pairs
+    return result;
+  }
+
+  // If there are 3 points, check the distances between them.
   if (points_num <= 3) {
     int *pairs = bf_closest_pair(Px, points_num);
     PointPair result;
@@ -305,10 +341,13 @@ PointPair dnc_closest_pair_rec(Point* Px, Point* Py, int points_num) {
   int r_idx = 0;
   for (int i = 0; i < points_num; i++) {
     if (Py[i].x < mid_point.x || (Py[i].x == mid_point.x && Py[i].y <= mid_point.y)) {
-        if(q_idx < mid) Qy[q_idx++] = Py[i];
-        else Ry[r_idx++] = Py[i]; // Handle vertical line case.
+        if (q_idx < mid) {
+            Qy[q_idx++] = Py[i];
+        }
     } else {
-      Ry[r_idx++] = Py[i];
+      if (r_idx < (points_num - mid)) {
+            Ry[r_idx++] = Py[i];
+      }
     }
   }
 
@@ -389,7 +428,7 @@ void max_heapify_points_by_x(Point* heap, int s, int i, int use_y) {
 }
 
 void build_max_heap_points_by_x(Point* arr, int s, int use_y) {
-  for (int i = (s >> 2) - 1; i > 0; i--) {
+  for (int i = (s >> 1) - 1; i >= 0; i--) {
     max_heapify_points_by_x(arr, s, i, use_y);
   }
 }
