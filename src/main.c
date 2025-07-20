@@ -148,10 +148,23 @@ void heap_sort_points_by_x(Point* arr, int s, int use_y);
 // === Implementation ===
 
 int main(void) {
+  FILE *out_fp = fopen("build/bin/performance.csv", "w");
+  if (!out_fp) {
+    fprintf(stderr, "[Main] Error: Could not open output file for writing.\n");
+    return EXIT_FAILURE;
+  }
+
+  fprintf(out_fp, "Points,Brute Force Time (ms),Brute Force Time (ns),Divide and Conquer Time (ms),Divide and Conquer Time (ns)\n");
+
   // Get the points (generate or retrieve from file).
   for (int i = 0; i < 10; i++) {
     int points_num = 10000 * (i + 1);
     printf("=== [Main] Analyzing %d points. ===\n\n", points_num);
+
+    double total_bf_time_ms = 0.0;
+    double total_bf_time_ns = 0.0;
+    double total_dnc_time_ms = 0.0;
+    double total_dnc_time_ns = 0.0;
 
     for (int j = 0; j < 10; j++) { // 10 variations of points_num.
       char filename[50];
@@ -182,7 +195,10 @@ int main(void) {
       elapsed_time_ns = (end.tv_sec - start.tv_sec) * 1000000000.0; // seconds to nanoseconds
       elapsed_time_ns += (end.tv_nsec - start.tv_nsec); // nanoseconds
 
-      printf("Method: Brute Force        | Time: %.2f ms | %.2f ns | Points found: (%d, %d) and (%d, %d)\n",
+      total_bf_time_ms += elapsed_time_ms;
+      total_bf_time_ns += elapsed_time_ns;
+
+      printf("Method: Brute Force        | Time: %10.2f ms | %20.2f ns | Points found: (%d, %d) and (%d, %d)\n",
              elapsed_time_ms, elapsed_time_ns, bf_p1->x, bf_p1->y, bf_p2->x, bf_p2->y);
 
       free(bf_pair); // Free the allocated memory for the pair.
@@ -201,8 +217,11 @@ int main(void) {
       elapsed_time_ns = (end.tv_sec - start.tv_sec) * 1000000000.0; // seconds to nanoseconds
       elapsed_time_ns += (end.tv_nsec - start.tv_nsec); // nanoseconds
 
-      printf("Method: Divide and Conquer | Time: %.2f ms | %.2f ns | Points found: (%d, %d) and (%d, %d)\n",
+      printf("Method: Divide and Conquer | Time: %10.2f ms | %20.2f ns | Points found: (%d, %d) and (%d, %d)\n",
              elapsed_time_ms, elapsed_time_ns, dnc_p1->x, dnc_p1->y, dnc_p2->x, dnc_p2->y);
+
+      total_dnc_time_ms += elapsed_time_ms;
+      total_dnc_time_ns += elapsed_time_ns;
 
       free(dnc_pair); // Free the allocated memory for the pair.
       
@@ -210,8 +229,17 @@ int main(void) {
       // printf("[Main] Successfully generated %d points.\n", points_num);
     }
 
+    fprintf(out_fp, "%d,%10.2f,%20.2f,%10.2f,%20.2f\n",
+            points_num,
+            total_bf_time_ms / 10.0,
+            total_bf_time_ns / 10.0,
+            total_dnc_time_ms / 10.0,
+            total_dnc_time_ns / 10.0
+    );
+
     printf("\n\n");
   }
+  fclose(out_fp);
   return 0;
 }
 
